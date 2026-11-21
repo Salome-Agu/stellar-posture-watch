@@ -20,6 +20,8 @@ from pathlib import Path
 
 MAX_CONFIG_BYTES = 1024 * 1024
 MAX_TEXT_INPUT = 256
+# GitHub caps a label name at 50 characters; the title limit above is a different field.
+MAX_LABEL_CHARS = 50
 NETWORK_KEYWORDS = ("mainnet", "testnet")
 
 # A secret seed is the same length and alphabet as an account id with a different
@@ -239,7 +241,9 @@ def check_config_path(value: str, problems: list[str]) -> Path | None:
     return candidate
 
 
-def check_text_input(name: str, value: str, problems: list[str]) -> None:
+def check_text_input(
+    name: str, value: str, problems: list[str], limit: int = MAX_TEXT_INPUT
+) -> None:
     if not value:
         problems.append(f"{name} must not be empty")
         return
@@ -250,8 +254,8 @@ def check_text_input(name: str, value: str, problems: list[str]) -> None:
         # the operator wrote, or it does not run.
         problems.append(f"{name} must not be blank")
         return
-    if len(value) > MAX_TEXT_INPUT:
-        problems.append(f"{name} is {len(value)} characters, over the {MAX_TEXT_INPUT} limit")
+    if len(value) > limit:
+        problems.append(f"{name} is {len(value)} characters, over the {limit} limit")
     if CONTROL_CHARS.search(value) or "\n" in value:
         problems.append(f"{name} carries a control character or a line break")
 
@@ -272,7 +276,7 @@ def validate(args: argparse.Namespace) -> list[str]:
         problems.append(f"gauge-repo {args.gauge_repo!r} is not an owner/name pair")
     if args.fail_on not in ("high", "warn"):
         problems.append(f"fail-on {args.fail_on!r} must be high or warn")
-    check_text_input("issue-label", args.issue_label, problems)
+    check_text_input("issue-label", args.issue_label, problems, MAX_LABEL_CHARS)
     check_text_input("title", args.title, problems)
     check_boolean("break-build", args.break_build, problems)
     check_boolean("dry-run", args.dry_run, problems)
