@@ -15,7 +15,7 @@ G4 are closed below, on the runs and on the reading of the body against the repo
 and 3.4 did not close it: one maintainer wrote both callers. Every claim here names the run or
 the file it was read from.
 
-Last updated: 2026-11-24 04:15 UTC
+Last updated: 2026-11-24 04:35 UTC
 rather than three, because a contributor who picked up two of them learned no format at all. The
 organization's `ISSUE_CONTRACT.md` in `posture-sec/.github` defines PI-1: a marker line naming the
 repository, the roadmap row, the kind and the wave tier, then nine numbered sections in the order a
@@ -744,6 +744,10 @@ it is why this repository's value right now is the plumbing rather than the find
 - [x] **9.52** Read an input reference written in brackets. Done-when: `INPUT_REF` matches `inputs.name`, `inputs['name']` and `inputs["name"]`, one helper returns the names a line references, and both `step_env_names()` and the run-block scan call it instead of `findall` on a two group pattern; a bracket binding is no longer reported as declared but never bound, and a bracket reference inside a `run:` block is refused by name beside the existing expression refusal. `tests/test_check_action_bracket_inputs.py` covers the three bindings and both run block shapes, and failed before the change. **Issue:** #79.
 - [x] **9.53** Refuse two steps that share a step id. Done-when: `check()` collects ids into a `dict[str, list[int]]` and appends one problem per adjacent repeat naming both lines, and the output rule reads the same map so a duplicated id is reported once and its outputs stay believed. `tests/test_check_action_duplicate_step_ids.py` covers two steps sharing an id, three sharing one (two problems), unique ids, and the shipped `action.yml` with `id: gauge` injected into a second step; every duplicate case returned no problems before the change. **Issue:** #80.
 - [x] **9.54** Scope the diagnostics artifact to the step that failed. Done-when: the upload step's `if:` is exactly `steps.gauge.outputs.exit-code == '2' || steps.gauge.outputs.exit-code == '3'` with no `failure()` term, the artifact is named `gauge-diagnostics-audit-exit-${{ steps.gauge.outputs.exit-code }}`, path, `if-no-files-found: ignore` and `retention-days: 7` are unchanged, and `ARCHITECTURE.md` section 7, `CONTRIBUTING.md` and the example comment say what the condition now is. `tests/test_workflows_artifact_scope.py` splits `action.yml` into steps, asserts each property and that no step but the audit declares `id: gauge`, and failed on the `failure()` term and the fixed name. **Issue:** #82.
+- [x] **9.55** Refuse a `limits` field that is not a string instead of coercing it. Done-when: `render()` raises `Refused` naming the field when `limits` is present but is not a `str` instance (a list, a dict, a number, a boolean or null each trigger the refusal), the absent-field refusal from `read_report` is unchanged, the error message names `limits`, no body or summary file is left behind, and `tests/test_limits_type.py` covers list, dict, number, boolean, null and absent inputs each asserting exit 2 with `limits` in stderr plus a string input that renders normally. **Issue:** #50.
+- [x] **9.56** Strip fenced code blocks before searching for the state marker. Done-when: `_strip_fences()` removes backtick and tilde fences of three or more characters from the text before `decode_state` sees it, an unterminated fence consumes from its opening to the end of the text so a marker embedded in a code example cannot survive as state, `decode_state` is unchanged, and `tests/test_state_in_fence.py` covers a marker inside a backtick fence, a marker inside a tilde fence, a live marker that follows a fenced copy of itself (only the live one is decoded), and a marker after an unterminated fence (no state decoded). **Issue:** #53.
+- [x] **9.57** Clean up newly created output files when an OSError interrupts the write. Done-when: `main()` tracks which output paths `os.replace` committed as new files in `created: list[Path]`, the `except OSError` block unlinks each with `contextlib.suppress(OSError)` after cleaning up the temp files, so a failure writing the summary cannot leave a body behind that a later run would treat as a previous body, and `tests/test_refusal_no_partial.py` asserts that bad JSON, a missing field, a non-string `limits`, an exit-code mismatch and a summary-out that is a pre-existing directory each leave neither body nor summary on disk. **Issue:** #54.
+- [x] **9.58** Assert that every fixture on disk is opened by a test and every fixture named in a test exists on disk. Done-when: `tests/test_fixture_reachability.py` scans all `test_*.py` files for `report-*.json` names, checks that every name on disk appears in at least one test file, every name in a test file exists on disk, every name in `tests/fixtures/README.md` exists on disk, and every name on disk is listed in that README, all four directions reported as set differences so a missing fixture names itself. **Issue:** #55.
 ## 6. Gates
 
 - [x] **G1** CI green on `main`: `ci / python` passing on the merged commit, and
@@ -809,7 +813,7 @@ it is why this repository's value right now is the plumbing rather than the find
 | 1 | The action | 11 | 11 | 100% |
 | 2 | Public shape | 12 | 13 | 92% |
 | 3 | Real use | 7 | 8 | 88% |
-| 9 (backlog) | Backlog, not scheduled | 48 | 54 | 89% |
+| 9 (backlog) | Backlog, not scheduled | 52 | 58 | 90% |
 | **All phases** | **Readiness total** | **37** | **39** | **95%** |
 | Gates | G1 to G5 | 4 | 5 | 80% |
 <!-- PROGRESS:END -->
