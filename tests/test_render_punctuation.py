@@ -8,6 +8,7 @@ than to ``escape()``, because chain-derived text passes through ``escape()``
 unchanged with respect to dashes, and checking ``escape()`` directly would
 not catch an em dash inserted into the template strings in render_report.py.
 """
+
 from __future__ import annotations
 
 import json
@@ -37,10 +38,22 @@ class TestNoPunctuation(unittest.TestCase):
         self._n += 1
         body = self.tmp / f"body{self._n}.md"
         exit_code = json.loads((FIXTURES / fixture).read_text())["exit_code"]
-        argv = [sys.executable, str(SCRIPT),
-                "--report", str(FIXTURES / fixture), "--out", str(body),
-                "--as-of", "2026-11-03", "--config", "policy.toml",
-                "--gauge-ref", PIN, "--exit-code", str(exit_code)]
+        argv = [
+            sys.executable,
+            str(SCRIPT),
+            "--report",
+            str(FIXTURES / fixture),
+            "--out",
+            str(body),
+            "--as-of",
+            "2026-11-03",
+            "--config",
+            "policy.toml",
+            "--gauge-ref",
+            PIN,
+            "--exit-code",
+            str(exit_code),
+        ]
         if previous is not None:
             argv += ["--previous-body", str(previous)]
         done = subprocess.run(argv, capture_output=True, text=True, check=False)
@@ -52,16 +65,14 @@ class TestNoPunctuation(unittest.TestCase):
             with self.subTest(fixture=name):
                 body = self._render(name)
                 for lineno, line in enumerate(body.splitlines(), 1):
-                    self.assertNotIn(EM_DASH, line,
-                        f"{name}: em dash on line {lineno}: {line!r}")
+                    self.assertNotIn(EM_DASH, line, f"{name}: em dash on line {lineno}: {line!r}")
 
     def test_no_change_body_contains_no_em_dash(self) -> None:
         first = self.tmp / "previous.md"
         first.write_text(self._render("report-clean.json"))
         body = self._render("report-clean.json", previous=first)
         for lineno, line in enumerate(body.splitlines(), 1):
-            self.assertNotIn(EM_DASH, line,
-                f"no-change render: em dash on line {lineno}: {line!r}")
+            self.assertNotIn(EM_DASH, line, f"no-change render: em dash on line {lineno}: {line!r}")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Tests for check_snapshot_scalars in render_report.account_rows."""
+
 from __future__ import annotations
 
 import json
@@ -29,11 +30,25 @@ class TestAccountScalars(unittest.TestCase):
         body = self.tmp / f"body{self._n}.md"
         exit_code = json.loads(report_path.read_text())["exit_code"]
         done = subprocess.run(
-            [sys.executable, str(SCRIPT),
-             "--report", str(report_path), "--out", str(body),
-             "--as-of", "2026-11-03", "--config", "policy.toml",
-             "--gauge-ref", PIN, "--exit-code", str(exit_code)],
-            capture_output=True, text=True, check=False,
+            [
+                sys.executable,
+                str(SCRIPT),
+                "--report",
+                str(report_path),
+                "--out",
+                str(body),
+                "--as-of",
+                "2026-11-03",
+                "--config",
+                "policy.toml",
+                "--gauge-ref",
+                PIN,
+                "--exit-code",
+                str(exit_code),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
         )
         return done.returncode, done.stderr
 
@@ -54,9 +69,7 @@ class TestAccountScalars(unittest.TestCase):
         self.assertIn("snapshot.ledger", err)
 
     def test_string_threshold_is_refused(self) -> None:
-        code, err = self._render(
-            self._make_report(thresholds={"low": "1", "medium": 2, "high": 3})
-        )
+        code, err = self._render(self._make_report(thresholds={"low": "1", "medium": 2, "high": 3}))
         self.assertEqual(code, 2)
         self.assertIn("snapshot.thresholds.low", err)
 

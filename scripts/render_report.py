@@ -338,9 +338,7 @@ def check_snapshot_scalars(snapshot: dict, where: str) -> None:
     """
     ledger = snapshot.get("ledger")
     if not isinstance(ledger, int) or isinstance(ledger, bool):
-        raise Refused(
-            f"{where}: snapshot.ledger must be an integer, got {type(ledger).__name__!r}"
-        )
+        raise Refused(f"{where}: snapshot.ledger must be an integer, got {type(ledger).__name__!r}")
     thresholds = snapshot.get("thresholds") or {}
     for name in ("low", "medium", "high"):
         val = thresholds.get(name, 0)

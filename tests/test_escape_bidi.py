@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Tests for bidi and zero-width character stripping in render_report.escape()."""
+
 from __future__ import annotations
 
 import sys

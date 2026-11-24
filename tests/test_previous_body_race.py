@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Tests for previous-body error handling in render_report."""
+
 from __future__ import annotations
 
 import argparse
@@ -29,12 +30,27 @@ class TestPreviousBodyErrors(unittest.TestCase):
         self._n += 1
         body = self.tmp / f"body{self._n}.md"
         done = subprocess.run(
-            [sys.executable, str(SCRIPT),
-             "--report", str(FIXTURES / "report-clean.json"),
-             "--out", str(body), "--previous-body", previous_path,
-             "--as-of", "2026-11-03", "--config", "policy.toml",
-             "--gauge-ref", PIN, "--exit-code", "0"],
-            capture_output=True, text=True, check=False,
+            [
+                sys.executable,
+                str(SCRIPT),
+                "--report",
+                str(FIXTURES / "report-clean.json"),
+                "--out",
+                str(body),
+                "--previous-body",
+                previous_path,
+                "--as-of",
+                "2026-11-03",
+                "--config",
+                "policy.toml",
+                "--gauge-ref",
+                PIN,
+                "--exit-code",
+                "0",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
         )
         return done.returncode, done.stderr, body.exists()
 
@@ -60,9 +76,13 @@ class TestPreviousBodyErrors(unittest.TestCase):
         args = argparse.Namespace(
             report=str(FIXTURES / "report-clean.json"),
             previous_body=str(previous),
-            as_of="2026-11-03", config="policy.toml",
-            gauge_repo="posture-sec/gauge", gauge_ref=PIN,
-            fail_on="high", exit_code=0, max_state_entries=200,
+            as_of="2026-11-03",
+            config="policy.toml",
+            gauge_repo="posture-sec/gauge",
+            gauge_ref=PIN,
+            fail_on="high",
+            exit_code=0,
+            max_state_entries=200,
         )
         with (
             patch.object(Path, "read_text", _raise_on_previous),
