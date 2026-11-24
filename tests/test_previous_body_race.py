@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests for previous-body error handling in render_report."""
 from __future__ import annotations
+
 import argparse
 import subprocess
 import sys
@@ -63,9 +64,11 @@ class TestPreviousBodyErrors(unittest.TestCase):
             gauge_repo="posture-sec/gauge", gauge_ref=PIN,
             fail_on="high", exit_code=0, max_state_entries=200,
         )
-        with patch.object(Path, "read_text", _raise_on_previous):
-            with self.assertRaises(rr.Refused) as ctx:
-                rr.render(args)
+        with (
+            patch.object(Path, "read_text", _raise_on_previous),
+            self.assertRaises(rr.Refused) as ctx,
+        ):
+            rr.render(args)
         self.assertIn("cannot read it", str(ctx.exception))
 
     def test_absent_previous_body_is_not_an_error(self) -> None:

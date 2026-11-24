@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Tests for bidi and zero-width character stripping in render_report.escape()."""
 from __future__ import annotations
+
 import sys
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
-from render_report import escape  # type: ignore[import-not-found]
+from render_report import escape  # type: ignore[import-not-found]  # noqa: E402
 
 
 class TestEscapeBidi(unittest.TestCase):

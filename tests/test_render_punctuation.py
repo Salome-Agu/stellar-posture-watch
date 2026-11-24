@@ -9,6 +9,7 @@ unchanged with respect to dashes, and checking ``escape()`` directly would
 not catch an em dash inserted into the template strings in render_report.py.
 """
 from __future__ import annotations
+
 import json
 import subprocess
 import sys

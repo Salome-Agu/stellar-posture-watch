@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests for check_snapshot_scalars in render_report.account_rows."""
 from __future__ import annotations
+
 import json
 import subprocess
 import sys
