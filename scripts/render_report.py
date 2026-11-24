@@ -183,6 +183,33 @@ def encode_state(findings: list[Finding], budget: int = MAX_STATE_ENTRIES) -> tu
         limit = max(limit - max(1, len(ordered) // 8), 0)
 
 
+def _strip_fences(text: str) -> str:
+    """Remove fenced code blocks from *text* before state decoding (issue #53).
+
+    Both backtick (```) and tilde (~~~) fences of three or more characters are
+    stripped.  An unterminated fence consumes from its opening marker to the end
+    of the text, so a marker embedded in a code example cannot survive as state.
+    """
+    out: list[str] = []
+    pos = 0
+    for m in re.finditer(r"^(`{3,}|~{3,})[^\n]*\n?", text, re.MULTILINE):
+        if m.start() < pos:
+            continue
+        out.append(text[pos : m.start()])
+        fence_char = m.group(1)[0]
+        fence_len = len(m.group(1))
+        # Match the closing fence: same character, same or greater length, at line start.
+        close_re = r"^" + re.escape(fence_char * fence_len) + r"+[^\n]*$"
+        close = re.search(close_re, text[m.end() :], re.MULTILINE)
+        if close:
+            pos = m.end() + close.end()
+        else:
+            # Unterminated fence: consume to end of text.
+            return "".join(out)
+    out.append(text[pos:])
+    return "".join(out)
+
+
 def decode_state(text: str) -> list[Finding] | None:
     """The findings recorded by a previous run, or None if the body carries no state."""
     all_matches = re.findall(
@@ -386,6 +413,9 @@ def render(args: argparse.Namespace) -> tuple[str, dict[str, object]]:
     tool_version = report.get("tool_version")
     if not isinstance(tool_version, str) or not tool_version:
         raise Refused("the report carries no tool_version")
+    limits = report.get("limits")
+    if not isinstance(limits, str):
+        raise Refused("the report carries a non-string limits field")
 
     all_findings = collect_findings(report, Path(args.report))
     open_findings, accepted = split_accepted(report, all_findings)
@@ -406,7 +436,7 @@ def render(args: argparse.Namespace) -> tuple[str, dict[str, object]]:
         if prev_path.exists():
             try:
                 raw_body = prev_path.read_text(encoding="utf-8", errors="replace")
-                previous = decode_state(raw_body)
+                previous = decode_state(_strip_fences(raw_body))
             except OSError as exc:
                 raise Refused(
                     f"previous body {prev_path}: cannot read it ({exc.strerror})"
@@ -543,6 +573,7 @@ def main(argv: list[str] | None = None) -> int:
         counts_text = f"{NO_CHANGE_SUMMARY} ({counts_text})"
     tmp_out: Path | None = None
     tmp_summary: Path | None = None
+    created: list[Path] = []
     try:
         out.parent.mkdir(parents=True, exist_ok=True)
         if str(out).startswith("/dev/") or (
@@ -576,11 +607,17 @@ def main(argv: list[str] | None = None) -> int:
                     os.fsync(f_sum.fileno())
 
         if tmp_out:
+            out_was_new = not out.exists()
             os.replace(tmp_out, out)
             tmp_out = None
+            if out_was_new:
+                created.append(out)
         if summary_path and tmp_summary:
+            summary_was_new = not summary_path.exists()
             os.replace(tmp_summary, summary_path)
             tmp_summary = None
+            if summary_was_new:
+                created.append(summary_path)
     except OSError as exc:
         if tmp_out and tmp_out.exists():
             with contextlib.suppress(OSError):
@@ -588,6 +625,9 @@ def main(argv: list[str] | None = None) -> int:
         if tmp_summary and tmp_summary.exists():
             with contextlib.suppress(OSError):
                 tmp_summary.unlink()
+        for p in created:
+            with contextlib.suppress(OSError):
+                p.unlink(missing_ok=True)
         print(f"render_report: cannot write {out}: {exc.strerror}", file=sys.stderr)
         return 2
     dropped = summary.get("dropped", 0)
